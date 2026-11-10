@@ -1,0 +1,59 @@
+name: Build hub
+
+on:
+  schedule:
+    - cron: '17 18 * * *'
+    - cron: '47 0 * * *'
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - name: Bake the page
+        run: node scripts/build.js
+        env:
+          CAL_MAIN_ICS:   ${{ secrets.CAL_MAIN_ICS }}
+          CAL_FAMILY_ICS: ${{ secrets.CAL_FAMILY_ICS }}
+          CAL_DJ_ICS:     ${{ secrets.CAL_DJ_ICS }}
+          CAL_JOBS_ICS:   ${{ secrets.CAL_JOBS_ICS }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  keepalive:
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: gautamkrishnar/keepalive-workflow@v2
