@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<!-- reload periodically so the wall screen picks up the newly baked page -->
+<meta http-equiv="refresh" content="__REFRESH__">
+<!-- launch chromeless when added to the iPad home screen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hub">
+<title>Lindquist Hub</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap">
+<style>
+:root{
+  --paper:#F3F0E6;--ink:#1F2A44;--ink-soft:#4A5878;
+  --cal-main:#235EA8;--cal-family:#3E8E5A;--cal-dj:#BE3624;--cal-job:#E8A61E;--sun:#FFC845;
+  --font:"Plus Jakarta Sans","Segoe UI","Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{background:var(--paper);color:var(--ink);font-family:var(--font);
+  -webkit-font-smoothing:antialiased;overflow:hidden;}
+.stage{position:absolute;top:0;left:0;right:0;bottom:0;padding:16px;}
+.board{width:100%;height:100%;display:flex;flex-direction:column;gap:12px;}
+
+.head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex:none;}
+.date .dow{font-weight:800;font-size:34px;line-height:.95;letter-spacing:-.02em;}
+.date .full{font-weight:700;font-size:16px;color:var(--ink-soft);margin-top:3px;}
+.suncenter{text-align:center;font-size:15px;font-weight:700;color:var(--ink-soft);white-space:nowrap;}
+.suncenter b{font-weight:800;color:var(--ink);}
+.wx-strip{display:flex;gap:7px;}
+.wx{min-width:62px;background:#fff;border-radius:14px;padding:7px 6px 6px;text-align:center;
+    display:flex;flex-direction:column;align-items:center;gap:2px;}
+.wx .d{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);}
+.wx svg{width:24px;height:24px;display:block;}
+.wx .t{font-size:12.5px;font-weight:800;letter-spacing:-.01em;}
+.wx .t .lo{color:var(--ink-soft);font-weight:700;}
+
+.cal{background:var(--ink);border-radius:24px;padding:18px 22px;color:#fff;flex:1 1 auto;min-height:0;overflow:hidden;}
+.weeks{display:flex;gap:26px;height:100%;}
+.week{flex:1 1 0;min-width:0;}
+.day-row{display:flex;gap:11px;margin-bottom:10px;}
+.date-chip{flex:none;width:40px;text-align:center;}
+.date-chip .num{font-weight:800;font-size:21px;line-height:1;letter-spacing:-.02em;}
+.date-chip .dow{font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#8FA2C4;margin-top:2px;}
+.date-chip.is-today .num,.date-chip.is-today .dow{color:var(--sun);}
+.events{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:6px;padding-top:1px;}
+.ev{display:flex;gap:9px;align-items:flex-start;}
+.ev .bar{flex:none;width:5px;align-self:stretch;min-height:15px;border-radius:3px;background:var(--cal-main);}
+.ev.family .bar{background:var(--cal-family);}
+.ev.dj .bar{background:var(--cal-dj);}
+.ev.job .bar{background:var(--cal-job);}
+.ev .txt{min-width:0;}
+.ev .when{font-size:11px;font-weight:800;color:#C9D5EC;letter-spacing:.01em;}
+.ev .what{font-size:14px;font-weight:700;line-height:1.2;}
+.empty{color:#7F92B4;font-weight:600;font-size:13px;}
+
+.bottom{flex:0 0 28%;display:flex;gap:12px;min-height:0;}
+.photo{flex:1 1 0;border-radius:20px;overflow:hidden;position:relative;display:flex;align-items:flex-end;
+       background:linear-gradient(135deg,#7FA7C9,#355E86);background-size:cover;background-position:center;}
+.photo .label{position:relative;z-index:2;padding:11px 15px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4);}
+.quip{flex:1 1 0;background:var(--sun);border-radius:20px;padding:16px 24px;display:flex;flex-direction:column;justify-content:center;min-width:0;}
+.quip .tag{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#8A6A12;margin-bottom:9px;}
+.quip .line{font-weight:800;font-size:19px;line-height:1.22;letter-spacing:-.01em;color:var(--ink);}
+.quip .punch{display:block;margin-top:7px;color:#9A3D1C;}
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="board">
+
+    <div class="head">
+      <div class="date">
+        <div class="dow">__DOW__</div>
+        <div class="full">__FULLDATE__</div>
+      </div>
+      <div class="suncenter"><span>Sunrise <b>__SUNRISE__</b></span> &nbsp;&middot;&nbsp; <span>Sunset <b>__SUNSET__</b></span></div>
+      <div class="wx-strip">__WX_CELLS__</div>
+    </div>
+
+    <div class="cal">
+      <div class="weeks">
+        <div class="week">__WEEK1__</div>
+        <div class="week">__WEEK2__</div>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <div class="photo" id="photo"><span class="label">__PHOTO_LABEL__</span></div>
+      <div class="quip">
+        <div class="tag">__JOKE_TAG__</div>
+        <div class="line">__JOKE_LINE__</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<script>
+/* photo rotation — ES5 only, safe on iOS 9 Safari */
+(function(){
+  var photos = __PHOTO_LIST__;
+  if(!photos || !photos.length){ return; }
+  var el = document.getElementById('photo');
+  var label = el.getElementsByTagName('span')[0];
+  if(label){ label.style.display = 'none'; }
+  var i = 0;
+  function show(){ el.style.backgroundImage = "url('photos/" + photos[i] + "')"; i = (i + 1) % photos.length; }
+  show();
+  if(photos.length > 1){ setInterval(show, __PHOTO_MS__); }
+})();
+</script>
+</body>
+</html>
