@@ -1,23 +1,16 @@
 {
   "location": { "lat": -27.4698, "lon": 153.0251, "timezone": "Australia/Brisbane" },
   "refreshMinutes": 30,
-  "photoSeconds": 20,
+  "maxEventsPerDay": 3,
 
   "calendars": [
-    { "key": "main",   "env": "CAL_MAIN_ICS",   "defaultColor": "main" },
-    { "key": "family", "env": "CAL_FAMILY_ICS", "defaultColor": "family" },
-    { "key": "dj",     "env": "CAL_DJ_ICS",     "defaultColor": "dj" },
-    { "key": "jobs",   "env": "CAL_JOBS_ICS",   "defaultColor": "job" }
+    { "key": "main",   "env": "CAL_MAIN_ICS" },
+    { "key": "family", "env": "CAL_FAMILY_ICS" },
+    { "key": "dj",     "env": "CAL_DJ_ICS" },
+    { "key": "jobs",   "env": "CAL_JOBS_ICS" }
   ],
 
   "skip": ["footy", "playgroup", "market"],
-
-  "keywordColors": [
-    { "match": ["wedding", "booking", "expo", "open day"], "color": "job" },
-    { "match": ["dj ", " dj", "gig", " set", "club", "warehouse"], "color": "dj" },
-    { "match": ["kids", "swim", "school", "dentist", "party", "timezone", "sunflower", "market", "mum"], "color": "family" },
-    { "match": ["tafe", "staff meeting", "week ", "payday", "moderation", "lunchtime", "currumbin", "studio", "soft nylon"], "color": "main" }
-  ],
 
   "rename": [
     { "match": "working currumbin", "to": "Working — Currumbin" }

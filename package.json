@@ -2,14 +2,11 @@
   "name": "lindquist-hub",
   "version": "1.0.0",
   "private": true,
-  "description": "Static family wall-dashboard baked daily from Google Calendar + weather.",
-  "scripts": {
-    "build": "node scripts/build.js"
-  },
-  "engines": {
-    "node": ">=18"
-  },
+  "description": "Static family wall-dashboard baked daily from Google Calendar + weather + content feeds.",
+  "scripts": { "build": "node scripts/build.js" },
+  "engines": { "node": ">=18" },
   "dependencies": {
-    "node-ical": "^0.20.1"
+    "node-ical": "^0.20.1",
+    "rrule": "^2.8.1"
   }
 }
