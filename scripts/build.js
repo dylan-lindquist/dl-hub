@@ -128,18 +128,25 @@ const dayIndex = Math.floor(rangeStartFloat.getTime() / 86400000);
 function pick(list) { return (list && list.length) ? list[((dayIndex % list.length) + list.length) % list.length] : null; }
 function clean(s) { return String(s).replace(/`/g, "'").replace(/\s+/g, ' ').trim(); }
 function stripTags(s) { return s.replace(/<[^>]*>/g, ' ').replace(/&lt;[^&]*&gt;/g, ' '); }
-function decode(s) { return s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, ' '); }
+function decode(s) {
+  return s.replace(/&#(\d+);/g, function (m, n) { n = +n; return n === 149 ? ' ' : String.fromCharCode(n); })
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, ' ');
+}
+// RSS wraps most fields in <![CDATA[ ... ]]> - take the inside
+function unCdata(s) { const m = String(s).match(/<!\[CDATA\[([\s\S]*?)\]\]>/); return m ? m[1] : String(s); }
+function cap(s) { s = String(s).trim(); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
 async function getWord() {
   try {
     const r = await fetch('https://www.merriam-webster.com/wotd/feed/rss2'); if (!r.ok) throw 0;
     const xml = await r.text();
     const item = xml.split('<item>')[1] || '';
-    const word = clean(decode((item.match(/<title>([\s\S]*?)<\/title>/) || [])[1] || ''));
-    let desc = decode((item.match(/<description>([\s\S]*?)<\/description>/) || [])[1] || '');
-    desc = clean(stripTags(desc));
-    const sentence = (desc.split(/(?<=\.)\s/)[0] || desc).slice(0, 150);
-    if (word && sentence) return { word: word, def: sentence };
+    const word = cap(clean(decode(unCdata((item.match(/<title>([\s\S]*?)<\/title>/) || [])[1] || ''))));
+    // MW publishes a clean one-line definition in <merriam:shortdef>
+    let def = clean(decode(unCdata((item.match(/<merriam:shortdef>([\s\S]*?)<\/merriam:shortdef>/) || [])[1] || '')));
+    def = cap(def.replace(/[.\s]+$/, '')).slice(0, 140);
+    if (word && def && word.length < 40 && !/[<>]/.test(word + def)) return { word: word, def: def + '.' };
     throw 0;
   } catch (e) { const f = pick(readData('words.json')); return f || { word: 'Petrichor', def: 'The earthy smell after rain on dry ground.' }; }
 }
@@ -147,12 +154,25 @@ async function getFact() {
   try { const r = await fetch('https://uselessfacts.jsph.pl/api/v2/facts/today'); if (!r.ok) throw 0; const j = await r.json(); const t = clean(j.text || ''); if (t) return t; throw 0; }
   catch (e) { return pick(readData('facts.json')) || 'Octopuses have three hearts and blue blood.'; }
 }
+// The riddle and joke feeds are random per call, and the site rebuilds every 2 hours.
+// To keep one riddle/joke per day, reuse the ones from the live page if it was built today.
+async function loadPrevState() {
+  try {
+    if (!config.siteUrl) return {};
+    const r = await fetch(config.siteUrl + '?t=' + Date.now()); if (!r.ok) return {};
+    const t = await r.text();
+    const m = t.match(/<!--HUBSTATE ([\s\S]*?) -->/); if (!m) return {};
+    const s = JSON.parse(m[1]);
+    return (s && s.day === todayKey) ? s : {};
+  } catch (e) { return {}; }
+}
 async function getRiddle() {
-  try { const r = await fetch('https://riddles-api.vercel.app/random'); if (!r.ok) throw 0; const j = await r.json(); const q = clean(j.riddle || ''); if (q) return q; throw 0; }
+  // Cards fit ~5 lines; very long riddles fall back to the (short) local pool.
+  try { const r = await fetch('https://riddles-api.vercel.app/random'); if (!r.ok) throw 0; const j = await r.json(); const q = clean(j.riddle || ''); if (q && q.length <= 200) return q; throw 0; }
   catch (e) { return pick(readData('riddles.json')) || 'What has to be broken before you can use it?'; }
 }
 async function getJoke() {
-  try { const r = await fetch('https://icanhazdadjoke.com/', { headers: { Accept: 'application/json', 'User-Agent': 'Lindquist Hub (github static board)' } }); if (!r.ok) throw 0; const j = await r.json(); const t = clean(j.joke || ''); if (t) return t; throw 0; }
+  try { const r = await fetch('https://icanhazdadjoke.com/', { headers: { Accept: 'application/json', 'User-Agent': 'Lindquist Hub (github static board)' } }); if (!r.ok) throw 0; const j = await r.json(); const t = clean(j.joke || ''); if (t && t.length <= 180) return t; throw 0; }
   catch (e) { return pick(readData('jokes.json')) || 'Why did the scarecrow win an award? Because he was outstanding in his field.'; }
 }
 
@@ -220,9 +240,11 @@ function renderCell(dateInst, byDay, opts) {
 
   // 4) bottom cards — weekend = riddle; weekday = word (AM) + fact (PM), flipped client-side
   const isWeekend = (todayDOW === 0 || todayDOW === 6);
+  const prev = await loadPrevState();
+  let riddle = null;
   let leftCard;
   if (isWeekend) {
-    const riddle = await getRiddle();
+    riddle = prev.riddle || await getRiddle();
     leftCard = '<div class="tag">Riddle</div><div class="line">' + esc(riddle) + '</div>';
   } else {
     const word = await getWord(); const fact = await getFact();
@@ -231,7 +253,7 @@ function renderCell(dateInst, byDay, opts) {
       '<div class="tag" id="pmtag" hidden>Did you know?</div>' +
       '<div class="line" id="pmline" hidden>' + esc(fact) + '</div>';
   }
-  const joke = await getJoke();
+  const joke = prev.joke || await getJoke();
 
   // 5) fill template
   let html = fs.readFileSync(path.join(ROOT, 'src', 'template.html'), 'utf8');
@@ -244,6 +266,9 @@ function renderCell(dateInst, byDay, opts) {
     '__LEFTCARD__': leftCard, '__JOKE__': esc(joke)
   };
   for (const k in repl) html = html.split(k).join(repl[k]);
+  // Remember today's joke/riddle so the next build today reuses them (no '-' inside the comment).
+  const state = { day: todayKey, joke: joke }; if (riddle) state.riddle = riddle;
+  html += '\n<!--HUBSTATE ' + JSON.stringify(state).replace(/-/g, '\\u002d') + ' -->\n';
 
   if (!fs.existsSync(OUT)) fs.mkdirSync(OUT, { recursive: true });
   fs.writeFileSync(path.join(OUT, 'index.html'), html);
