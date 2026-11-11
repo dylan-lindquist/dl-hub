@@ -2,8 +2,7 @@ name: Build hub
 
 on:
   schedule:
-    - cron: '17 18 * * *'
-    - cron: '47 0 * * *'
+    - cron: '17 */2 * * *'   # every 2 hours at :17 (Brisbane: 8:17, 10:17, 12:17 ... even hours)
   workflow_dispatch:
   push:
     branches: [ main ]
