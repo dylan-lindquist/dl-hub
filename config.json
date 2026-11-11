@@ -1,6 +1,7 @@
 {
   "location": { "lat": -27.4698, "lon": 153.0251, "timezone": "Australia/Brisbane" },
   "refreshMinutes": 30,
+  "siteUrl": "https://dylan-lindquist.github.io/dl-hub/",
   "maxEventsPerDay": 3,
 
   "calendars": [
